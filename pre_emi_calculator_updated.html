@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-EMI Calculator</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px auto; 
+            max-width: 800px; 
+            padding: 20px; 
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2, h3 { text-align: center; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input { 
+            width: 100%; 
+            padding: 8px; 
+            margin-top: 5px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+        }
+        button { 
+            width: 100%; 
+            padding: 10px; 
+            margin-top: 10px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+            background: white;
+        }
+        th, td { 
+            padding: 12px; 
+            border: 1px solid black; 
+            text-align: center;
+        }
+        th { background-color: #007bff; color: white; }
+    </style>
+    <script>
+        function addRow(type) {
+            let container = document.getElementById(type + '-container');
+            let inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group';
+            inputGroup.innerHTML = `
+                <input type="number" placeholder="Month" class="month"> 
+                <input type="number" placeholder="Amount" class="amount"> 
+                <button type="button" onclick="this.parentElement.remove()">Remove</button>
+            `;
+            container.appendChild(inputGroup);
+        }
+
+        function getEntries(type) {
+            let entries = {};
+            document.querySelectorAll(`#${type}-container .input-group`).forEach(group => {
+                let month = parseInt(group.querySelector('.month').value);
+                let amount = parseFloat(group.querySelector('.amount').value);
+                if (!isNaN(month) && !isNaN(amount)) {
+                    entries[month] = amount;
+                }
+            });
+            return entries;
+        }
+
+        function calculateSchedule() {
+            let disbursements = getEntries('disbursement');
+            let prepayments = getEntries('prepayment');
+            let rate = parseFloat(document.getElementById("rate").value);
+            let months = parseInt(document.getElementById("months").value);
+            
+            let cumulativeDisbursed = 0;
+            let schedule = "<tr><th>Month</th><th>Loan Disbursed</th><th>Cumulative Loan Disbursed</th><th>Pre-EMI</th><th>Prepayment</th></tr>";
+            
+            for (let month = 1; month <= months; month++) {
+                let loanDisbursed = disbursements[month] || 0;
+                cumulativeDisbursed += loanDisbursed;
+                let prepayment = prepayments[month] || 0;
+                let preEmi = (cumulativeDisbursed * (rate / (12 * 100))).toFixed(2);
+                
+                schedule += `<tr>
+                    <td>${month}</td>
+                    <td>${loanDisbursed.toFixed(2)}</td>
+                    <td>${cumulativeDisbursed.toFixed(2)}</td>
+                    <td>${preEmi}</td>
+                    <td>${prepayment.toFixed(2)}</td>
+                </tr>`;
+            }
+            document.getElementById("schedule").innerHTML = schedule;
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Pre-EMI Calculator</h2>
+        <label>Annual Interest Rate (%): <input type="number" id="rate" value="8.5"></label>
+        <label>Loan Tenure (months): <input type="number" id="months" value="24"></label>
+        <br><br>
+        <h3>Disbursements</h3>
+        <div id="disbursement-container"></div>
+        <button onclick="addRow('disbursement')">Add Disbursement</button>
+        <h3>Prepayments</h3>
+        <div id="prepayment-container"></div>
+        <button onclick="addRow('prepayment')">Add Prepayment</button>
+        <br><br>
+        <button onclick="calculateSchedule()">Calculate</button>
+        <table id="schedule"></table>
+    </div>
+</body>
+</html>
